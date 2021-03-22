@@ -2,18 +2,18 @@
 // 🦠 Corona-Warn-App
 //
 
-import Foundation
 import UIKit
-
+import OpenCombine
 final class CheckinCoordinator {
 
 	// MARK: - Init
-
 	init(
-		store: Store
+		store: Store,
+		eventStore: EventStoringProviding
 	) {
 		self.store = store
-		
+		self.eventStore = eventStore
+
 		#if DEBUG
 		if isUITesting {
 			// app launch argument
@@ -22,52 +22,89 @@ final class CheckinCoordinator {
 			}
 		}
 		#endif
+
+		setupCheckinBadgeCount()
 	}
 
 	// MARK: - Internal
-
 	lazy var viewController: UINavigationController = {
-		let checkInsTableViewController = CheckinsTableViewController(
-			showQRCodeScanner: showQRCodeScanner,
-			showSettings: showSettings
+		let checkinsOverviewViewController = CheckinsOverviewViewController(
+			viewModel: checkinsOverviewViewModel,
+			onInfoButtonTap: { [weak self] in
+				self?.presentInfoScreen()
+			},
+			onAddEntryCellTap: { [weak self] in
+				self?.showQRCodeScanner()
+			},
+			onMissingPermissionsButtonTap: { [weak self] in
+				self?.showSettings()
+			}
 		)
-		
+
+		let footerViewController = FooterViewController(
+			FooterViewModel(
+				primaryButtonName: AppStrings.Checkins.Overview.deleteAllButtonTitle,
+				isSecondaryButtonEnabled: false,
+				isPrimaryButtonHidden: true,
+				isSecondaryButtonHidden: true,
+				primaryButtonColor: .systemRed
+			)
+		)
+
+		let topBottomContainerViewController = TopBottomContainerViewController(
+			topController: checkinsOverviewViewController,
+			bottomController: footerViewController
+		)
+
 		// show the info screen only once
 		if !infoScreenShown {
-			return ENANavigationControllerWithFooter(rootViewController: infoScreen(hidesCloseButton: true, dismissAction: { [weak self] in
+			return UINavigationController(rootViewController: infoScreen(hidesCloseButton: true, dismissAction: { [weak self] in
 				guard let self = self else { return }
 				// Push Checkin Table View Controller
-				self.viewController.pushViewController(checkInsTableViewController,	animated: true)
+				self.viewController.pushViewController(topBottomContainerViewController, animated: true)
 				// Set as the only controller on the navigation stack to avoid back gesture etc.
-				self.viewController.setViewControllers([checkInsTableViewController], animated: false)
+				self.viewController.setViewControllers([topBottomContainerViewController], animated: false)
 				self.infoScreenShown = true // remember and don't show it again
 			},
 			showDetail: { detailViewController in
 				self.viewController.pushViewController(detailViewController, animated: true)
 			}))
 		} else {
-			return UINavigationController(rootViewController: checkInsTableViewController)
+			let navigationController = UINavigationController(rootViewController: topBottomContainerViewController)
+			navigationController.navigationBar.prefersLargeTitles = true
+			return navigationController
 		}
-		
 	}()
 
 	// MARK: - Private
-	
 	private let store: Store
+	private let eventStore: EventStoringProviding
+
+	private var subscriptions: [AnyCancellable] = []
+
 	private var infoScreenShown: Bool {
 		get { store.checkinInfoScreenShown }
 		set { store.checkinInfoScreenShown = newValue }
 	}
-	
+
+	private lazy var checkinsOverviewViewModel: CheckinsOverviewViewModel = {
+		CheckinsOverviewViewModel(
+			store: eventStore,
+			onEntryCellTap: { checkin in
+				Log.debug("Checkin cell tapped: \(checkin)")
+			}
+		)
+	}()
+
 	private func showQRCodeScanner() {
-				
 		let qrCodeScanner = CheckinQRCodeScannerViewController(
-			didScanCheckin: { [weak self] checkin in
+			didScanCheckin: { [weak self] traceLocation in
 				self?.viewController.dismiss(animated: true, completion: {
-					self?.showCheckinDetails(checkin)
+					self?.showCheckinDetails(traceLocation)
 				})
 			},
 			dismiss: { [weak self] in
+				self?.checkinsOverviewViewModel.updateForCameraPermission()
 				self?.viewController.dismiss(animated: true)
 			}
 		)
@@ -79,13 +116,13 @@ final class CheckinCoordinator {
 		}
 	}
 
-	private func showCheckinDetails(_ checkin: Checkin) {
+	private func showCheckinDetails(_ traceLocation: TraceLocation) {
 		let checkinDetailViewController = CheckinDetailViewController(
-			checkin,
+			traceLocation,
 			dismiss: { [weak self] in self?.viewController.dismiss(animated: true) },
 			presentCheckins: { [weak self] in
 				self?.viewController.dismiss(animated: true, completion: {
-//					self?.showCheckins()
+					//					self?.showCheckins()
 				})
 			}
 		)
@@ -100,13 +137,14 @@ final class CheckinCoordinator {
 		}
 		UIApplication.shared.open(url, options: [:])
 	}
-	
+
 	private func infoScreen(
 		hidesCloseButton: Bool = false,
 		dismissAction: @escaping (() -> Void),
 		showDetail: @escaping ((UIViewController) -> Void)
 	) -> UIViewController {
-		let viewController = CheckinsInfoScreenViewController(
+
+		let checkinsInfoScreenViewController = CheckinsInfoScreenViewController(
 			viewModel: CheckInsInfoScreenViewModel(
 				presentDisclaimer: {
 					let detailViewController = HTMLViewController(model: AppInformationModel.privacyModel)
@@ -119,13 +157,29 @@ final class CheckinCoordinator {
 				dismissAction()
 			}
 		)
-		return viewController
+
+		let footerViewController = FooterViewController(
+			FooterViewModel(
+				primaryButtonName: AppStrings.Checkins.Information.primaryButtonTitle,
+				primaryIdentifier: AccessibilityIdentifiers.CheckinInformation.primaryButton,
+				isSecondaryButtonEnabled: false,
+				isPrimaryButtonHidden: false,
+				isSecondaryButtonHidden: true
+			)
+		)
+
+		let topBottomContainerViewController = TopBottomContainerViewController(
+			topController: checkinsInfoScreenViewController,
+			bottomController: footerViewController
+		)
+
+		return topBottomContainerViewController
 	}
 
 	private func presentInfoScreen() {
 		// Promise the navigation view controller will be available,
 		// this is needed to resolve an inset issue with large titles
-		var navigationController: ENANavigationControllerWithFooter!
+		var navigationController: UINavigationController!
 		let infoVC = infoScreen(
 			dismissAction: {
 				navigationController.dismiss(animated: true)
@@ -136,8 +190,18 @@ final class CheckinCoordinator {
 		)
 		// We need to use UINavigationController(rootViewController: UIViewController) here,
 		// otherwise the inset of the navigation title is wrong
-		navigationController = ENANavigationControllerWithFooter(rootViewController: infoVC)
+		navigationController = UINavigationController(rootViewController: infoVC)
 		viewController.present(navigationController, animated: true)
+	}
+
+	private func setupCheckinBadgeCount() {
+		eventStore.checkinsPublisher
+			.receive(on: DispatchQueue.main.ocombine)
+			.sink { [weak self] checkins in
+				let activeCheckinCount = checkins.filter { $0.isActive }.count
+				self?.viewController.tabBarItem.badgeValue = activeCheckinCount > 0 ? String(activeCheckinCount) : nil
+			}
+			.store(in: &subscriptions)
 	}
 
 }
