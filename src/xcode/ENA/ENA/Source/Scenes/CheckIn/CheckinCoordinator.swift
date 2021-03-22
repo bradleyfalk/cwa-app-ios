@@ -90,15 +90,28 @@ final class CheckinCoordinator {
 	private lazy var checkinsOverviewViewModel: CheckinsOverviewViewModel = {
 		CheckinsOverviewViewModel(
 			store: eventStore,
-			onEntryCellTap: { checkin in
+			onEntryCellTap: { [weak self] checkin in
 				guard !checkin.isActive else {
 					Log.debug("active checkIns won't show anything at the moment")
 					return
 				}
-				Log.debug("Checkin cell tapped: \(checkin)")
+				self?.showEditCheckIn(checkin)
 			}
 		)
 	}()
+
+	private func showEditCheckIn(_ checkIn: Checkin) {
+		// ToDo: add Footer logic
+		let editCheckInViewController = EditCheckinDetailViewController(
+			checkIn: checkIn,
+			dismiss: { [weak self] in
+				self?.viewController.dismiss(animated: true)
+			},
+			presentCheckins: { // [weak self] in
+				Log.debug("NYD - what to do here?")
+			})
+		viewController.present(editCheckInViewController, animated: true)
+	}
 
 	private func showQRCodeScanner() {
 		let qrCodeScanner = CheckinQRCodeScannerViewController(
