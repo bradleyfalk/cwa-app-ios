@@ -91,6 +91,10 @@ final class CheckinCoordinator {
 		CheckinsOverviewViewModel(
 			store: eventStore,
 			onEntryCellTap: { checkin in
+				guard !checkin.isActive else {
+					Log.debug("active checkIns won't show anything at the moment")
+					return
+				}
 				Log.debug("Checkin cell tapped: \(checkin)")
 			}
 		)
