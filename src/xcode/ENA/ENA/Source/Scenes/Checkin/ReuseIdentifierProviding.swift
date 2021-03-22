@@ -1,14 +1,8 @@
-////
+//
 // 🦠 Corona-Warn-App
 //
 
 import Foundation
-
-protocol ConfigureableCell: ReuseIdentifierProviding {
-
-	func configure<T>(cellViewModel: T)
-
-}
 
 protocol ReuseIdentifierProviding {
 
