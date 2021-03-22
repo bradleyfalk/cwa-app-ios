@@ -2137,11 +2137,7 @@ Die Angaben werden statistisch ausgewertet, sie werden nicht zu einem Profil ges
 
 "Checkin_Information_PrimaryButton_Title" = "Einverstanden";
 
-"Checkin_Details_Hours" = "Stunden";
-
 "Checkin_Details_HoursShortVersion" = "Std.";
-
-"Checkin_Details_Minutes" = " Minuten";
 
 "Checkin_Details_CheckinFor" = "Einchecken für:";
 
