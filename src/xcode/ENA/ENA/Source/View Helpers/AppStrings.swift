@@ -1334,7 +1334,7 @@ enum AppStrings {
 	enum Checkins {
 
 		enum Edit {
-			static let primaryButtonTitle = NSLocalizedString("Checkins_Edit__PrimaryButton_Title", comment: "")
+			static let primaryButtonTitle = NSLocalizedString("Checkins_Edit_PrimaryButton_Title", comment: "")
 		}
 
         enum QRScanner {

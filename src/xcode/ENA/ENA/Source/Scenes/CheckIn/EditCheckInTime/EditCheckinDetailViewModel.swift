@@ -13,67 +13,31 @@ final class EditCheckinDetailViewModel {
 		_ checkIn: Checkin
 	) {
 		self.checkIn = checkIn
+	}
 
-		if let defaultDuration = checkIn.traceLocationDefaultCheckInLengthInMinutes {
-			selectedDurationInMinutes = defaultDuration
-		} else {
-			let eventDuration = Calendar.current.dateComponents(
-				[.minute],
-				from: checkIn.traceLocationStartDate ?? Date(),
-				to: checkIn.traceLocationEndDate ?? Date()
-			)
-			// the 0 should not be possible since we expect either the defaultCheckInLengthInMinutes or the start and end dates to be available always
-			selectedDurationInMinutes = eventDuration.minute ?? 0
+	enum TableViewSections: Int, CaseIterable {
+		case description
+//		case checkInStart
+//		case startPicker
+//		case checkInEnd
+//		case endPicker
+
+		var numberOfRows: Int {
+			switch self {
+			case .description:
+				return 1
+			}
 		}
 	}
-	
+
 	// MARK: - Internal
-		
-	@OpenCombine.Published var descriptionLabelTitle: String?
-	@OpenCombine.Published var addressLabelTitle: String?
-	@OpenCombine.Published var initialDuration: Int?
-	
-	var shouldSaveToContactJournal = true
 
-	func pickerView(didSelectRow numberOfMinutes: Int) {
-		selectedDurationInMinutes = numberOfMinutes
-		
-	}
-		
-	func setupView() {
-		descriptionLabelTitle = checkIn.traceLocationDescription
-		addressLabelTitle = checkIn.traceLocationAddress
-		initialDuration = selectedDurationInMinutes
-	}
-
-	func saveCheckinToDatabase() {
-		/*
-		let startDate = Date()
-		let endDate = Calendar.current.date(byAdding: .minute, value: selectedDurationInMinutes, to: startDate)
-
-		let checkin = Checkin(
-			id: 0,
-			traceLocationGUID: traceLocation.guid,
-			traceLocationVersion: traceLocation.version,
-			traceLocationType: traceLocation.type,
-			traceLocationDescription: traceLocation.description,
-			traceLocationAddress: traceLocation.address,
-			traceLocationStartDate: traceLocation.startDate,
-			traceLocationEndDate: traceLocation.endDate,
-			traceLocationDefaultCheckInLengthInMinutes: traceLocation.defaultCheckInLengthInMinutes,
-			traceLocationSignature: traceLocation.signature,
-			checkinStartDate: Date(),
-			checkinEndDate: endDate,
-			targetCheckinEndDate: endDate,
-			createJournalEntry: shouldSaveToContactJournal
-		)
-		// TO DO: SAVE to the store
-*/
+	var checkInDescriptionCellModel: CheckInDescriptionCellModel {
+		return CheckInDescriptionCellModel(checkIn: checkIn)
 	}
 
 	// MARK: - Private
 	
-	private var selectedDurationInMinutes: Int
 	private let checkIn: Checkin
 
 }

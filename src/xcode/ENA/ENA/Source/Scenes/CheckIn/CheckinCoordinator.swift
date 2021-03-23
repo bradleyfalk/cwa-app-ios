@@ -116,16 +116,13 @@ final class CheckinCoordinator {
 			checkIn: checkIn,
 			dismiss: { [weak self] in
 				self?.viewController.dismiss(animated: true)
-			},
-			presentCheckins: { // [weak self] in
-				Log.debug("NYD - what to do here?")
-			})
+			}
+		)
 
 		let topBottomContainerViewController = TopBottomContainerViewController(
 			topController: editCheckInViewController,
 			bottomController: footerViewController
 		)
-
 		viewController.present(topBottomContainerViewController, animated: true)
 	}
 

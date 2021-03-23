@@ -10,14 +10,18 @@ class CloseBarButtonItem: UIBarButtonItem {
 	// MARK: - Init
 
 	init(
-		onTap: @escaping () -> Void
+		onTap: @escaping () -> Void,
+		contrastMode: Bool = false
 	) {
 		self.onTap = onTap
 
 		super.init()
-
 		let closeButton = UIButton(type: .custom)
-		closeButton.setImage(UIImage(named: "Icons - Close"), for: .normal)
+		if contrastMode {
+			closeButton.setImage(UIImage(named: "Icons - Close - Contrast"), for: .normal)
+		} else {
+			closeButton.setImage(UIImage(named: "Icons - Close"), for: .normal)
+		}
 		closeButton.setImage(UIImage(named: "Icons - Close - Tap"), for: .highlighted)
 		closeButton.addTarget(self, action: #selector(didTap), for: .primaryActionTriggered)
 		customView = closeButton

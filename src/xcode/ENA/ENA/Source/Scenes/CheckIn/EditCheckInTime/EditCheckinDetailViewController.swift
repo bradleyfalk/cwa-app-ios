@@ -5,19 +5,17 @@
 import UIKit
 import OpenCombine
 
-class EditCheckinDetailViewController: UIViewController, FooterViewHandling {
+class EditCheckinDetailViewController: UIViewController, UITableViewDataSource, FooterViewHandling {
 
 	// MARK: - Init
 
 	init(
 		checkIn: Checkin,
-		dismiss: @escaping () -> Void,
-		presentCheckins: @escaping () -> Void
+		dismiss: @escaping () -> Void
 	) {
 		self.dismiss = dismiss
-		self.presentCheckins = presentCheckins
 		self.viewModel = EditCheckinDetailViewModel(checkIn)
-		
+
 		super.init(nibName: nil, bundle: nil)
 	}
 
@@ -30,8 +28,9 @@ class EditCheckinDetailViewController: UIViewController, FooterViewHandling {
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
-
+//		setupNavigationBar()
 		setupView()
+		setupTableView()
 	}
 
 	// MARK: - Protocol FooterViewHandling
@@ -44,35 +43,79 @@ class EditCheckinDetailViewController: UIViewController, FooterViewHandling {
 		}
 	}
 
+	// MARK: - UITableViewDataSource
+
+	func numberOfSections(in tableView: UITableView) -> Int {
+		return EditCheckinDetailViewModel.TableViewSections.allCases.count
+	}
+
+	func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+		return EditCheckinDetailViewModel.TableViewSections(rawValue: section)?.numberOfRows ?? 0
+	}
+
+	func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//		let cell = UITableViewCell(style: .default, reuseIdentifier: "TestALotCell")
+//		cell.textLabel?.text = "Hallo Welt"
+//		return cell
+
+		let cell = tableView.dequeueReusableCell(cellType: CheckInDescriptionCell.self, for: indexPath)
+		cell.configure(cellModel: viewModel.checkInDescriptionCellModel)
+		return cell
+	}
+
 	// MARK: - Private
-	
-	@IBOutlet private weak var bottomCardView: UIView!
-	@IBOutlet private weak var descriptionView: UIView!
-	@IBOutlet private weak var logoImageView: UIImageView!
-	@IBOutlet private weak var checkInForLabel: ENALabel!
-	@IBOutlet private weak var activityLabel: ENALabel!
-	@IBOutlet private weak var descriptionLabel: ENALabel!
-	@IBOutlet private weak var addressLabel: ENALabel!
-	@IBOutlet private weak var saveToDiaryLabel: ENALabel!
-	@IBOutlet private weak var automaticCheckOutLabel: ENALabel!
-	@IBOutlet private weak var pickerButton: ENAButton!
-	@IBOutlet private weak var pickerContainerView: UIView!
-	@IBOutlet private weak var pickerSeparator: UIView!
-	@IBOutlet private weak var datePickerView: UIDatePicker!
-	
 	
 	private let viewModel: EditCheckinDetailViewModel
 	private let dismiss: () -> Void
-	private let presentCheckins: () -> Void
 
 	private var subscriptions = Set<AnyCancellable>()
 	private var selectedDuration: Int?
 	private var isInitialSetup = true
+	private var tableView = UITableView()
+
+	private func setupNavigationBar() {
+		let logoImage = UIImage(imageLiteralResourceName: "Corona-Warn-App").withRenderingMode(.alwaysTemplate)
+		let logoImageView = UIImageView(image: logoImage)
+		logoImageView.tintColor = .enaColor(for: .textContrast)
+		parent?.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: logoImageView)
+		parent?.navigationItem.rightBarButtonItem = CloseBarButtonItem(onTap: dismiss, contrastMode: true)
+
+//		parent?.navigationController?.navigationBar.isTranslucent = true
+	}
 
 	private func setupView() {
-		viewModel.setupView()
+		parent?.view.backgroundColor = .clear
+		let backGroundView = GradientBackgroundView()
+		backGroundView.translatesAutoresizingMaskIntoConstraints = false
+		view.addSubview(backGroundView)
 
-		view.backgroundColor = .enaColor(for: .background)
+		let gradientNavigationView = GradientNavigationView()
+		gradientNavigationView.translatesAutoresizingMaskIntoConstraints = false
+		backGroundView.addSubview(gradientNavigationView)
+
+		tableView.translatesAutoresizingMaskIntoConstraints = false
+		tableView.backgroundColor = .clear
+		backGroundView.addSubview(tableView)
+
+
+		NSLayoutConstraint.activate(
+			[
+				backGroundView.topAnchor.constraint(equalTo: view.topAnchor),
+				backGroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+				backGroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+				backGroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+
+				gradientNavigationView.topAnchor.constraint(equalTo: backGroundView.topAnchor, constant: 24.0),
+				gradientNavigationView.leadingAnchor.constraint(equalTo: backGroundView.leadingAnchor, constant: 16.0),
+				gradientNavigationView.trailingAnchor.constraint(equalTo: backGroundView.trailingAnchor, constant: -16.0),
+
+				tableView.topAnchor.constraint(equalTo: gradientNavigationView.bottomAnchor),
+				tableView.leadingAnchor.constraint(equalTo: backGroundView.leadingAnchor),
+				tableView.trailingAnchor.constraint(equalTo: backGroundView.trailingAnchor),
+				tableView.bottomAnchor.constraint(equalTo: backGroundView.bottomAnchor)
+		])
+
+		/*
 		checkInForLabel.text = AppStrings.Checkins.Details.checkinFor
 		activityLabel.text = AppStrings.Checkins.Details.activity
 		saveToDiaryLabel.text = AppStrings.Checkins.Details.saveToDiary
@@ -101,52 +144,14 @@ class EditCheckinDetailViewController: UIViewController, FooterViewHandling {
 
 			}
 			.store(in: &subscriptions)
-	}
-	
-	private func setupPicker(with duration: Int) {
-		datePickerView.locale = Locale(identifier: "de_DE")
-		datePickerView.datePickerMode = .countDownTimer
-		datePickerView.minuteInterval = 15
-		datePickerView.addTarget(self, action: #selector(didSelectDuration(datePicker:)), for: .valueChanged)
-	}
-	
-	@objc
-	private func didSelectDuration(datePicker: UIDatePicker) {
-		viewModel.pickerView(didSelectRow: datePicker.date.todaysMinutes)
-		let components = datePicker.date.todaysMinutes.quotientAndRemainder(dividingBy: 60)
-		pickerButton.setTitle(
-			"\(components.quotient):\(components.remainder) " + AppStrings.Checkins.Details.hoursShortVersion,
-			for: .normal
-		)
+*/
 	}
 
-	private func addBorderAndColorToView(_ view: UIView, color: UIColor) {
-		view.layer.borderColor = color.cgColor
-		view.layer.borderWidth = 1
+	private func setupTableView() {
+		tableView.dataSource = self
+		tableView.separatorStyle = .none
+
+		tableView.register(CheckInDescriptionCell.self, forCellReuseIdentifier: CheckInDescriptionCell.reuseIdentifier)
 	}
-	
-	@IBAction private func showPickerButton(_ sender: Any) {
-		pickerContainerView.isHidden = !pickerContainerView.isHidden
-		pickerSeparator.isHidden = pickerContainerView.isHidden
-		
-		if !pickerContainerView.isHidden && isInitialSetup {
-			isInitialSetup = false
-			let components = selectedDuration?.quotientAndRemainder(dividingBy: 60)
-			let date = DateComponents(calendar: Calendar.current, hour: components?.quotient, minute: components?.remainder).date ?? Date()
-			datePickerView.setDate(date, animated: true)
-		}
-	}
-	
-	@IBAction private func checkInPressed(_ sender: Any) {
-		viewModel.saveCheckinToDatabase()
-		presentCheckins()
-	}
-	
-	@IBAction private func cancelButtonPressed(_ sender: Any) {
-		dismiss()
-	}
-	
-	@IBAction private func switchValueChanged(_ sender: UISwitch) {
-		viewModel.shouldSaveToContactJournal = sender.isOn
-	}
+
 }
