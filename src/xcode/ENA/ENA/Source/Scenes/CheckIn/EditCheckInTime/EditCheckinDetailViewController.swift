@@ -37,7 +37,11 @@ class EditCheckinDetailViewController: UIViewController, FooterViewHandling {
 	// MARK: - Protocol FooterViewHandling
 
 	func didTapFooterViewButton(_ type: FooterViewModel.ButtonType) {
-		Log.debug("NYD")
+		footerView?.setLoadingIndicator(true, disable: true, button: .primary)
+		// ToDo remove delay
+		DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+			self?.dismiss()
+		}
 	}
 
 	// MARK: - Private

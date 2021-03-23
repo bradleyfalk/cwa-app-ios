@@ -101,7 +101,17 @@ final class CheckinCoordinator {
 	}()
 
 	private func showEditCheckIn(_ checkIn: Checkin) {
-		// ToDo: add Footer logic
+		let footerViewController = FooterViewController(
+			FooterViewModel(
+				primaryButtonName: AppStrings.Checkins.Edit.primaryButtonTitle,
+				secondaryButtonName: nil,
+				isPrimaryButtonEnabled: true,
+				isSecondaryButtonEnabled: false,
+				isPrimaryButtonHidden: false,
+				isSecondaryButtonHidden: true
+			)
+		)
+
 		let editCheckInViewController = EditCheckinDetailViewController(
 			checkIn: checkIn,
 			dismiss: { [weak self] in
@@ -110,7 +120,13 @@ final class CheckinCoordinator {
 			presentCheckins: { // [weak self] in
 				Log.debug("NYD - what to do here?")
 			})
-		viewController.present(editCheckInViewController, animated: true)
+
+		let topBottomContainerViewController = TopBottomContainerViewController(
+			topController: editCheckInViewController,
+			bottomController: footerViewController
+		)
+
+		viewController.present(topBottomContainerViewController, animated: true)
 	}
 
 	private func showQRCodeScanner() {
