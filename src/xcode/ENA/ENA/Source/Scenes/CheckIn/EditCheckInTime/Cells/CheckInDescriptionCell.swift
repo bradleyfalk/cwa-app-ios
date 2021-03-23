@@ -45,17 +45,22 @@ class CheckInDescriptionCell: UITableViewCell, ReuseIdentifierProviding {
 		traceLocationTypeLabel.translatesAutoresizingMaskIntoConstraints = false
 		traceLocationTypeLabel.font = .enaFont(for: .body)
 		traceLocationTypeLabel.textColor = .enaColor(for: .textPrimary2)
+		traceLocationTypeLabel.numberOfLines = 0
+
 		traceLocationDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
 		traceLocationDescriptionLabel.font = .enaFont(for: .title1)
 		traceLocationDescriptionLabel.textColor = .enaColor(for: .textPrimary1)
+		traceLocationDescriptionLabel.numberOfLines = 0
+
 		traceLocationAddressLabel.translatesAutoresizingMaskIntoConstraints = false
 		traceLocationAddressLabel.font = .enaFont(for: .body)
 		traceLocationAddressLabel.textColor = .enaColor(for: .textPrimary2)
+		traceLocationAddressLabel.numberOfLines = 0
 
 		let tileView = UIView()
 		tileView.translatesAutoresizingMaskIntoConstraints = false
 		tileView.backgroundColor = .enaColor(for: .background)
-		tileView.layer.cornerRadius = 18.0
+		tileView.layer.cornerRadius = 12.0
 		tileView.layer.masksToBounds = true
 		tileView.layer.borderWidth = 1.0
 		tileView.layer.borderColor = UIColor.enaColor(for: .hairline).cgColor
@@ -81,8 +86,8 @@ class CheckInDescriptionCell: UITableViewCell, ReuseIdentifierProviding {
 				tileView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 				tileView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16.0),
 				tileView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16.0),
-				stackView.topAnchor.constraint(equalTo: tileView.topAnchor, constant: 29.0),
-				stackView.bottomAnchor.constraint(equalTo: tileView.bottomAnchor, constant: -29.0),
+				stackView.topAnchor.constraint(equalTo: tileView.topAnchor, constant: 32.0),
+				stackView.bottomAnchor.constraint(equalTo: tileView.bottomAnchor, constant: -32.0),
 				stackView.leadingAnchor.constraint(equalTo: tileView.leadingAnchor, constant: 16.0),
 				stackView.trailingAnchor.constraint(equalTo: tileView.trailingAnchor, constant: -16.0)
 			]
